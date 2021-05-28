@@ -190,12 +190,12 @@ function download_formats()
         local res = format_cache[url]
         return res, table_size(res)
     end
-    mp.osd_message("fetching available formats with youtube-dl...", 60)
+    mp.osd_message("Выборка доступных форматов с помощью youtube-dl...", 60)
 
     if not (ytdl.searched) then
         local ytdl_mcd = mp.find_config_file("youtube-dl")
         if not (ytdl_mcd == nil) then
-            msg.verbose("found youtube-dl at: " .. ytdl_mcd)
+            msg.verbose("Нашел youtube-dl на: " .. ytdl_mcd)
             ytdl.path = ytdl_mcd
         end
         ytdl.searched = true
@@ -206,16 +206,16 @@ function download_formats()
     local es, json, result = exec(command)
 
     if (es < 0) or (json == nil) or (json == "") then
-        mp.osd_message("fetching formats failed...", 1)
-        msg.error("failed to get format list: " .. err)
+        mp.osd_message("Выборка форматов не удалась...", 1)
+        msg.error("Не удалось получить список форматов: " .. err)
         return {}, 0
     end
 
     local json, err = utils.parse_json(json)
 
     if (json == nil) then
-        mp.osd_message("fetching formats failed...", 1)
-        msg.error("failed to parse JSON data: " .. err)
+        mp.osd_message("Выборка форматов не удалась...", 1)
+        msg.error("Не удалось разобрать данные JSON: " .. err)
         return {}, 0
     end
 
