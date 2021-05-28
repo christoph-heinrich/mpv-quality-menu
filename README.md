@@ -1,4 +1,4 @@
-# youtube-quality ru
+# mpv-youtube-quality-ru
 A userscript for MPV that allows you to change youtube video quality (ytdl-format) on the fly, as though you were using the web player. (Translation of the [script](https://github.com/jgreco/mpv-youtube-quality/) into Russian)
 
 ![screenshot](quality-menu.png)
