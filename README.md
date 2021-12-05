@@ -1,5 +1,4 @@
-# youtube-quality
-A userscript for MPV that allows you to change youtube video quality and audio quality (ytdl-format) on the fly.
+A userscript for MPV that allows you to change youtube video quality and audio quality (ytdl-format) on the fly. (Translation of the [script](https://github.com/christoph-heinrich/mpv-youtube-quality) into Russian)
 
 ![screenshot](quality-menu-video.png)
 ![screenshot](quality-menu-audio.png)
