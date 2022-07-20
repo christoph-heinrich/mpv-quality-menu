@@ -40,6 +40,31 @@ Simply open the video or audio menu, select your prefered format and confirm you
 3. **(optional)** Save the `quality-menu.conf` into your `script-opts` directory (next to the [scripts directory](https://mpv.io/manual/stable/#script-location), create if it doesn't exist)
 4. **(optional)** Save the `quality-menu-osc.lua` into your [scripts directory](https://mpv.io/manual/stable/#script-location)  and put `osc=no` in your [mpv.conf](https://mpv.io/manual/stable/#location-and-syntax)
 
+## API
+This was originally made for the [uosc](https://github.com/tomasklaen/uosc) integration.
+The way it is integrated has changed since then, but I wanted to make the API available regardless.
+It has been made a bit more general since the uosc integration with little testing, so consider this experimental.
+If you notice any problems, please open an issue about it.
+
+Receiving the following script messages is suppored, with the parameters in braces.
+
+- video_formats_get (url, script_name)  
+    Request to send the available formats for `url` to `script_name` with the `video-formats` script message.  
+    If there are currently no formats available, the request is queued up and the formats are sent out as soon as they are available.
+- audio_formats_get (url, script_name)  
+    Analogous to `video_formats_get`.
+- video_format_set (url, format_id)  
+    Set the `format_id` for the given `url`. Setting this to `nil` disables the video format.
+    If `url` is the currently playing video, it will set `ytdl-format` and reload the video.
+    This does not check if the id is actually available, so it is possible to set invalid ids. But that means it is also possible to set something like `bestvideo[height<=1080]`.
+- audio_format_set (url, format_id)  
+    Analogous to `audio_formats_get`.
+- register_ui (script_name, message_video, message_audio)  
+    Whenever the menu would get toggled, it instead sends a script message to `script_name`.  
+    For the video menu it sends the `message_video` message, and for audio it sends the `message_audio` message.
+
+
+
 ## Plans For Future Enhancement
 - [x] Visual indication of what the current quality level is.
 - [x] Option to populate the quality list automatically with the exact formats available for a given video.
