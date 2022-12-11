@@ -418,7 +418,11 @@ end
 
 local function download_formats(url)
 
-    mp.osd_message("fetching available formats with youtube-dl...", 60)
+    if opts.fetch_on_start and not opts.start_with_menu then
+        msg.info("fetching available formats with youtube-dl...")
+    else
+        mp.osd_message("fetching available formats with youtube-dl...", 60)
+    end
 
     if not (ytdl.searched) then
         local ytdl_mcd = mp.find_config_file(opts.ytdl_ver)
