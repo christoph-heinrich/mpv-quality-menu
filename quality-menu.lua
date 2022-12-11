@@ -129,6 +129,7 @@ opt.read_options(opts, "quality-menu")
 opts.quality_strings = utils.parse_json(opts.quality_strings)
 
 opts.font_size = tonumber(opts.style_ass_tags:match('\\fs(%d+%.?%d*)')) or mp.get_property_number('osd-font-size') or 25
+opts.curtain_opacity = math.max(math.min(opts.curtain_opacity, 1), 0)
 
 -- special thanks to reload.lua (https://github.com/4e6/mpv-reload/)
 local function reload_resume()
@@ -688,13 +689,15 @@ local function show_menu(isvideo)
     local function draw_menu()
         local ass = assdraw.ass_new()
 
-        local alpha = 255 - math.ceil(255 * opts.curtain_opacity)
-        ass.text = string.format('{\\pos(0,0)\\rDefault\\an7\\1c&H000000&\\alpha&H%X&}', alpha)
-        ass:draw_start()
-        ass:rect_cw(0, 0, width, height)
-        ass:draw_stop()
+        if opts.curtain_opacity > 0 then
+            local alpha = 255 - math.ceil(255 * opts.curtain_opacity)
+            ass.text = string.format('{\\pos(0,0)\\rDefault\\an7\\1c&H000000&\\alpha&H%X&}', alpha)
+            ass:draw_start()
+            ass:rect_cw(0, 0, width, height)
+            ass:draw_stop()
+            ass:new_event()
+        end
 
-        ass:new_event()
         local scrolled_lines = get_scrolled_lines()
         local pos_y = opts.shift_y + margin_top * height + opts.text_padding_y - scrolled_lines * opts.font_size
         ass:pos(opts.shift_x + opts.text_padding_x, pos_y)
