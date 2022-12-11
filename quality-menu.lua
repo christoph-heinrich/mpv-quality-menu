@@ -5,8 +5,8 @@
 --
 -- Usage:
 -- add bindings to input.conf:
--- Ctrl+f script-binding quality_menu/video_formats_toggle
--- Alt+f  script-binding quality_menu/audio_formats_toggle
+-- F     script-binding quality_menu/video_formats_toggle
+-- Alt+f script-binding quality_menu/audio_formats_toggle
 
 local mp = require 'mp'
 local utils = require 'mp.utils'
@@ -19,7 +19,7 @@ local opts = {
     up_binding = "UP WHEEL_UP",
     down_binding = "DOWN WHEEL_DOWN",
     select_binding = "ENTER MBTN_LEFT",
-    close_menu_binding = "ESC MBTN_RIGHT Ctrl+f Alt+f",
+    close_menu_binding = "ESC MBTN_RIGHT F Alt+f",
 
     --youtube-dl version(could be youtube-dl or yt-dlp, or something else)
     ytdl_ver = "yt-dlp",
@@ -31,7 +31,7 @@ local opts = {
     unselected_and_inactive = "○ - ",
 
     --font size scales by window, if false requires larger font and padding sizes
-    scale_playlist_by_window = false,
+    scale_playlist_by_window = true,
 
     --playlist ass style overrides inside curly brackets, \keyvalue is one field, extra \ for escape in lua
     --example {\\fnUbuntu\\fs10\\b0\\bord1} equals: font=Ubuntu, size=10, bold=no, border=1

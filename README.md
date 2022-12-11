@@ -29,8 +29,8 @@ Simply open the video or audio menu, select your prefered format and confirm you
 1. Save the `quality-menu.lua` into your [scripts directory](https://mpv.io/manual/stable/#script-location)
 2. Set key bindings in [`input.conf`](https://mpv.io/manual/stable/#input-conf)
     ```
-    Ctrl+f script-binding quality_menu/video_formats_toggle
-    Alt+f  script-binding quality_menu/audio_formats_toggle
+    F     script-binding quality_menu/video_formats_toggle
+    Alt+f script-binding quality_menu/audio_formats_toggle
     ```
     **(optional)** `Ctrl+r script-binding quality_menu/reload`
 
@@ -40,8 +40,8 @@ Simply open the video or audio menu, select your prefered format and confirm you
     - For [uosc](https://github.com/tomasklaen/uosc) (each is optional)
         1. Add the video and audio menu to the uosc menu by appending `#! ...` to your key bindings in [`input.conf`](https://mpv.io/manual/stable/#input-conf)
         ```
-        Ctrl+f script-binding quality_menu/video_formats_toggle #! Stream Quality > Video
-        Alt+f  script-binding quality_menu/audio_formats_toggle #! Stream Quality > Audio
+        F     script-binding quality_menu/video_formats_toggle #! Stream Quality > Video
+        Alt+f script-binding quality_menu/audio_formats_toggle #! Stream Quality > Audio
         ```
         2. Add buttons to the `contols=` option in your [`uosc.conf`](https://github.com/tomasklaen/uosc/blob/main/script-opts/uosc.conf)
             1. `<!has_many_video,video,stream>command:theaters:script-binding quality_menu/video_formats_toggle#@vformats>1?Video`
