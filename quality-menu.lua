@@ -394,6 +394,22 @@ end
 
 local uosc = false
 local url_data = {}
+local function uosc_set_format_counts()
+    if not uosc then return end
+
+    local new_path = get_url()
+    if not new_path then return end
+
+    local data = url_data[new_path]
+    if data then
+        mp.commandv('script-message-to', 'uosc', 'set', 'vformats', #data.voptions)
+        mp.commandv('script-message-to', 'uosc', 'set', 'aformats', #data.aoptions)
+    else
+        mp.commandv('script-message-to', 'uosc', 'set', 'vformats', 0)
+        mp.commandv('script-message-to', 'uosc', 'set', 'aformats', 0)
+    end
+end
+
 local function process_json_string(url, json)
     local json, err = utils.parse_json(json)
 
@@ -410,10 +426,7 @@ local function process_json_string(url, json)
 
     local vres, ares, vfmt, afmt = process_json(json)
     url_data[url] = { voptions = vres, aoptions = ares, vfmt = vfmt, afmt = afmt }
-    if uosc and get_url() == url then
-        mp.commandv('script-message-to', 'uosc', 'set', 'vformats', #vres)
-        mp.commandv('script-message-to', 'uosc', 'set', 'aformats', #ares)
-    end
+    uosc_set_format_counts()
     return vres, ares, vfmt, afmt
 end
 
@@ -859,20 +872,12 @@ mp.add_key_binding(nil, "reload", reload_resume)
 local original_format = mp.get_property("ytdl-format")
 local path = nil
 local function file_start()
+    uosc_set_format_counts()
+
     local new_path = get_url()
     if not new_path then return end
 
     local data = url_data[new_path]
-
-    if uosc then
-        if data then
-            mp.commandv('script-message-to', 'uosc', 'set', 'vformats', #data.voptions)
-            mp.commandv('script-message-to', 'uosc', 'set', 'aformats', #data.aoptions)
-        else
-            mp.commandv('script-message-to', 'uosc', 'set', 'vformats', 0)
-            mp.commandv('script-message-to', 'uosc', 'set', 'aformats', 0)
-        end
-    end
 
     if opts.reset_format and path and new_path ~= path then
         if data then
@@ -934,5 +939,6 @@ mp.register_script_message('uosc-version', function(version)
     version = tonumber((version:gsub('%.', '')))
     ---@diagnostic disable-next-line: cast-local-type
     uosc = version and version >= 400
+    uosc_set_format_counts()
 end)
 mp.commandv('script-message-to', 'uosc', 'get-version', mp.get_script_name())
