@@ -104,7 +104,7 @@ local opts = {
     --language, format, format_note, quality
     --
     --columns that are derived from the above, but with special treatment:
-    --frame_rate, bitrate_total, bitrate_video, bitrate_audio,
+    --size, frame_rate, bitrate_total, bitrate_video, bitrate_audio,
     --codec_video, codec_audio, audio_sample_rate
     --
     --If those still aren't enough or you're just curious, run:
