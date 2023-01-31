@@ -646,6 +646,8 @@ local function set_format(url, vfmt, afmt)
     end
 end
 
+local video_formats_toggle
+local audio_formats_toggle
 local destroyer = nil
 local function show_menu(isvideo)
 
@@ -690,9 +692,6 @@ local function show_menu(isvideo)
                 break
             end
         end
-    else
-        active = #options + 1
-        selected = active
     end
 
     if uosc then
@@ -701,8 +700,33 @@ local function show_menu(isvideo)
             items = {},
             type = (isvideo and 'video' or 'audio') .. '_formats',
         }
+
+        menu.items[#menu.items + 1] = {
+            title = isvideo and 'Audio' or 'Video',
+            italic = true,
+            bold = true,
+            hint = 'open menu',
+            value = {
+                'script-message-to',
+                'quality_menu',
+                isvideo and 'audio_formats_toggle' or 'video_formats_toggle',
+            }
+        }
+        menu.items[#menu.items + 1] = {
+            title = 'Disabled',
+            italic = true,
+            muted = true,
+            hint = '—',
+            value = {
+                'script-message-to',
+                'quality_menu',
+                (isvideo and 'video' or 'audio') .. '-format-set',
+                url
+            }
+        }
+
         for i, option in ipairs(options) do
-            menu.items[i] = {
+            menu.items[#menu.items + 1] = {
                 title = option.title,
                 hint = option.hint,
                 active = i == active,
@@ -715,15 +739,7 @@ local function show_menu(isvideo)
                 }
             }
         end
-        menu.items[#menu.items + 1] = {
-            title = 'None',
-            value = {
-                'script-message-to',
-                'quality_menu',
-                (isvideo and 'video' or 'audio') .. '-format-set',
-                url
-            }
-        }
+
         local json = utils.format_json(menu)
         mp.commandv('script-message-to', 'uosc', 'open-menu', json)
         return
@@ -740,7 +756,7 @@ local function show_menu(isvideo)
 
     local width, height
     local margin_top, margin_bottom = 0, 0
-    local num_options = #options + 1
+    local num_options = #options > 0 and #options + 2 or 1
 
     local function get_scrolled_lines()
         local output_height = height - opts.text_padding_y * 2 - margin_top * height - margin_bottom * height
@@ -773,9 +789,11 @@ local function show_menu(isvideo)
             for i, v in ipairs(options) do
                 ass:append(choose_prefix(i) .. v.label .. "\\N")
             end
-            ass:append(choose_prefix(#options + 1) .. "None")
+            ass:append(choose_prefix(#options + 1) .. "Disabled\\N")
+            ass:append(choose_prefix(#options + 2) .. (isvideo and 'Audio' or 'Video') .. ' menu')
         else
-            ass:append("no formats found")
+            ass:append("no formats found\\N")
+            ass:append(opts.selected_and_inactive .. (isvideo and 'Audio' or 'Video') .. ' menu')
         end
 
         mp.set_osd_ass(width, height, ass.text)
@@ -852,11 +870,12 @@ local function show_menu(isvideo)
         end
     end
 
+    local reset_osd = true
     local function destroy()
         if timeout then
             timeout:kill()
         end
-        mp.set_osd_ass(0, 0, "")
+        if reset_osd then mp.set_osd_ass(0, 0, "") end
         unbind_keys(opts.up_binding, "move_up")
         unbind_keys(opts.down_binding, "move_down")
         unbind_keys(opts.select_binding, "select")
@@ -873,20 +892,25 @@ local function show_menu(isvideo)
 
     bind_keys(opts.up_binding, "move_up", function() selected_move(-1) end, { repeatable = true })
     bind_keys(opts.down_binding, "move_down", function() selected_move(1) end, { repeatable = true })
-    if #options > 0 then
-        bind_keys(opts.select_binding, "select", function()
+    bind_keys(opts.select_binding, "select", function()
+        if selected == num_options then
+            reset_osd = false
             destroy()
-            if selected == active then return end
+            if isvideo then audio_formats_toggle()
+            else video_formats_toggle() end
+            return
+        end
+        destroy()
+        if selected == active then return end
 
-            fmt = options[selected] and options[selected].format or nil
-            if isvideo then
-                vfmt = fmt
-            else
-                afmt = fmt
-            end
-            set_format(url, vfmt, afmt)
-        end)
-    end
+        fmt = options[selected] and options[selected].format or nil
+        if isvideo then
+            vfmt = fmt
+        else
+            afmt = fmt
+        end
+        set_format(url, vfmt, afmt)
+    end)
     bind_keys(opts.close_menu_binding, "close", destroy) --close menu using ESC
     mp.osd_message("", 0)
     draw_menu()
@@ -894,7 +918,7 @@ end
 
 local ui_callback = {}
 
-local function video_formats_toggle()
+function video_formats_toggle()
     if #ui_callback > 0 then
         for _, name in ipairs(ui_callback) do
             mp.commandv('script-message-to', name, 'video-formats-menu')
@@ -904,7 +928,7 @@ local function video_formats_toggle()
     end
 end
 
-local function audio_formats_toggle()
+function audio_formats_toggle()
     if #ui_callback > 0 then
         for _, name in ipairs(ui_callback) do
             mp.commandv('script-message-to', name, 'audio-formats-menu')
