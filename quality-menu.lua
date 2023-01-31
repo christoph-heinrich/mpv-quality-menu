@@ -98,6 +98,10 @@ local opts = {
     --which columns are shown in which order
     --comma separated list, prefix column with "-" to align left
     --
+    --for the uosc integration it is possible to split the text up into a title and a hint
+    --this is done by separating two columns with a "|" instead of a comma
+    --column order in the hint is reversed
+    --
     --columns that might be useful are:
     --resolution, width, height, fps, dynamic_range, tbr, vbr, abr, asr,
     --filesize, filesize_approx, vcodec, acodec, ext, video_ext, audio_ext,
@@ -114,8 +118,8 @@ local opts = {
     --
     --Not all videos have all columns available.
     --Be careful, misspelled columns simply won't be displayed, there is no error.
-    columns_video = '-resolution,frame_rate,dynamic_range,language,bitrate_total,size,-codec_video,-codec_audio',
-    columns_audio = 'audio_sample_rate,bitrate_total,size,language,-codec_audio',
+    columns_video = '-resolution,frame_rate,dynamic_range|language,bitrate_total,size,-codec_video,-codec_audio',
+    columns_audio = 'audio_sample_rate,bitrate_total|size,language,-codec_audio',
 
     --columns used for sorting, see "columns_video" for available columns
     --comma separated list, prefix column with "-" to reverse sorting order
@@ -315,31 +319,46 @@ local function process_json(json)
         format_special_fields(format)
     end
 
-    local function format_table(formats, columns)
-        local function calc_shown_columns()
-            local display_col = {}
-            local column_widths = {}
-            local column_values = {}
-            local columns, column_align_left = strip_minus(columns)
+    local function format_formats(formats, column_definition)
+        local columns, column_align_left = strip_minus(string_split(column_definition, '|,'))
 
+        -- ensure all column props are strings
+        for _, format in pairs(formats) do
+            for _, prop in ipairs(columns) do
+                format[prop] = tostring(format[prop] or "")
+            end
+        end
+
+        local identical_props = {}
+        do
+            local function all_formats_same_value(formats, prop)
+                local first_value = nil
+                for _, format in pairs(formats) do
+                    first_value = first_value or format[prop]
+                    if format[prop] ~= first_value then return false end
+                end
+                return true
+            end
+
+            for _, prop in ipairs(columns) do
+                identical_props[prop] = all_formats_same_value(formats, prop)
+            end
+        end
+
+        local function format_table(formats, columns, column_align_left, identical_columns)
+            local column_widths = {}
             for _, format in pairs(formats) do
                 for col, prop in ipairs(columns) do
-                    local label = tostring(format[prop] or "")
-                    format[prop] = label
-
-                    if not column_widths[col] or column_widths[col] < label:len() then
-                        column_widths[col] = label:len()
+                    if not column_widths[col] or column_widths[col] < format[prop]:len() then
+                        column_widths[col] = format[prop]:len()
                     end
-
-                    column_values[col] = column_values[col] or label
-                    display_col[col] = display_col[col] or (column_values[col] ~= label)
                 end
             end
 
             local show_columns = {}
             for i, width in ipairs(column_widths) do
-                if width > 0 and not opts.hide_identical_columns or display_col[i] then
-                    local prop = columns[i]
+                local prop = columns[i]
+                if width > 0 and not (opts.hide_identical_columns and identical_columns[prop]) then
                     show_columns[#show_columns + 1] = {
                         prop = prop,
                         width = width,
@@ -347,30 +366,60 @@ local function process_json(json)
                     }
                 end
             end
-            return show_columns
+
+            local spacing = 2
+            local rows = {}
+            for i, f in ipairs(formats) do
+                local row = {}
+                for j, column in ipairs(show_columns) do
+                    -- lua errors out with width > 99 ("invalid conversion specification")
+                    local width = math.min(column.width * (column.align_left and -1 or 1), 99)
+                    row[j] = string.format('%' .. width .. 's', f[column.prop] or "")
+                end
+                rows[i] = table.concat(row, string.format('%' .. spacing .. 's', '')):gsub('%s+$', '')
+            end
+            return rows
         end
 
-        local show_columns = calc_shown_columns()
+        local labels = format_table(formats, columns, column_align_left, identical_props)
 
-        local spacing = 2
-        local res = {}
-        for _, f in ipairs(formats) do
-            local row = ''
-            for i, column in ipairs(show_columns) do
-                -- lua errors out with width > 99 ("invalid conversion specification")
-                local width = math.min(column.width * (column.align_left and -1 or 1), 99)
-                row = row .. (i > 1 and string.format('%' .. spacing .. 's', '') or '')
-                    .. string.format('%' .. width .. 's', f[column.prop] or "")
+        local title_hint_columns = string_split(column_definition, '|')
+        local title_columns, title_column_align_left = strip_minus(string_split(title_hint_columns[1], ','))
+        local titles = format_table(formats, title_columns, title_column_align_left, identical_props)
+
+        local hints = nil
+        if title_hint_columns[2] then
+            local hint_columns, _ = strip_minus(string_split(title_hint_columns[2], ','))
+
+            -- reverse column order
+            local n = #hint_columns
+            for i = 1, n / 2 do
+                hint_columns[i], hint_columns[n - i + 1] = hint_columns[n - i + 1], hint_columns[i]
             end
-            res[#res + 1] = { label = row:gsub('%s+$', ''), format = f.format_id }
+
+            hints = {}
+            for i, f in ipairs(formats) do
+                local row = {}
+                for _, prop in ipairs(hint_columns) do
+                    local val = f[prop]
+                    if #val > 0 and not (opts.hide_identical_columns and identical_props[prop]) then
+                        row[#row + 1] = val
+                    end
+                end
+                hints[i] = table.concat(row, ', ')
+            end
+        end
+
+        local res = {}
+        for i, f in ipairs(formats) do
+            res[i] = { label = labels[i], title = titles[i], hint = hints and hints[i] or nil, format = f.format_id }
         end
         return res
     end
 
-    local columns_video = string_split(opts.columns_video, ',')
-    local columns_audio = string_split(opts.columns_audio, ',')
-    local vres = format_table(video_formats, columns_video)
-    local ares = format_table(audio_formats, columns_audio)
+    local vres = format_formats(video_formats, opts.columns_video)
+    local ares = format_formats(audio_formats, opts.columns_audio)
+
     return vres, ares, vfmt, afmt
 end
 
@@ -654,7 +703,8 @@ local function show_menu(isvideo)
         }
         for i, option in ipairs(options) do
             menu.items[i] = {
-                title = option.label,
+                title = option.title,
+                hint = option.hint,
                 active = i == active,
                 value = {
                     'script-message-to',
