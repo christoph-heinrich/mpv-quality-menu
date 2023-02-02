@@ -1014,5 +1014,14 @@ mp.register_script_message('uosc-version', function(version)
     ---@diagnostic disable-next-line: cast-local-type
     uosc = version and version >= 400
     uosc_set_format_counts()
+    if version and version >= 451 then
+        mp.commandv(
+            'script-message-to',
+            'uosc',
+            'overwrite-binding',
+            'stream-quality',
+            'script-binding quality_menu/video_formats_toggle'
+        )
+    end
 end)
 mp.commandv('script-message-to', 'uosc', 'get-version', mp.get_script_name())
