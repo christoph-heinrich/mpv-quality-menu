@@ -177,7 +177,7 @@ local function process_json(json)
 
     local vfmt = nil
     local afmt = nil
-    local requested_formats = json["requested_formats"] or json["requested_downloads"]
+    local requested_formats = json["requested_formats"] or json["requested_downloads"] or {}
     for _, format in ipairs(requested_formats) do
         if is_video(format) then
             vfmt = format["format_id"]
