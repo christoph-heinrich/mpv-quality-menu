@@ -528,12 +528,12 @@ local function download_formats(url)
     end
 
     local ytdl_format = mp.get_property("ytdl-format")
-    local command = nil
-    if (ytdl_format == nil or ytdl_format == "") then
-        command = { ytdl.path, "--no-warnings", "--no-playlist", "-J", url }
-    else
-        command = { ytdl.path, "--no-warnings", "--no-playlist", "-J", "-f", ytdl_format, url }
+    local command = { ytdl.path, "--no-warnings", "--no-playlist", "-J", url }
+    if ytdl_format and #ytdl_format > 0 then
+        command[#command + 1] = "-f"
+        command[#command + 1] = ytdl_format
     end
+    if opts.ytdl_ver == "yt-dlp" then command[#command + 1] = "--no-match-filter" end
 
     msg.verbose("calling youtube-dl with command: " .. table.concat(command, " "))
 
