@@ -16,7 +16,7 @@ Simply open the video or audio menu, select your prefered format and confirm you
 - Simple reload functionality
 - Columns and their order are configurable
 - **(optional)** Graphical menu via [uosc](https://github.com/tomasklaen/uosc) integration  
-    Note: Requires uosc 4.0.0 or newer.
+    Note: Requires uosc 4.5.1 or newer.
 
 ## OSC extension
 **(optional)** An extended version of the OSC is available that includes a button to display the quality menu.
@@ -43,57 +43,10 @@ Simply open the video or audio menu, select your prefered format and confirm you
         F     script-binding quality_menu/video_formats_toggle #! Stream Quality > Video
         Alt+f script-binding quality_menu/audio_formats_toggle #! Stream Quality > Audio
         ```
-        2. Add buttons to the `contols=` option in your [`uosc.conf`](https://github.com/tomasklaen/uosc/blob/main/script-opts/uosc.conf)
+        2. quality-menu already overwrites the builtin uosc command `stream-quality`, so it already works well out of the box.
+            For even deeper UI integration you can add buttons to the `contols=` option in your [`uosc.conf`](https://github.com/tomasklaen/uosc/blob/main/script-opts/uosc.conf)
             1. `<!has_many_video,video,stream>command:theaters:script-binding quality_menu/video_formats_toggle#@vformats>1?Video`
             2. `<!has_many_audio,has_audio,stream>command:graphic_eq:script-binding quality_menu/audio_formats_toggle#@aformats>1?Audio`
-
-## API
-This was originally made for the [uosc](https://github.com/tomasklaen/uosc) integration.
-The way it is integrated has changed since then, but I wanted to make the API available regardless.
-It has been made a bit more general since the uosc integration with little testing, so consider this experimental.
-If you notice any problems, please open an issue about it.
-
-Receiving the following script messages is suppored, with the parameters in braces.
-
-- `video-formats-get` `(url, script_name)`  
-    Request to send the available formats for `url` to `script_name` with the `video-formats` script message.  
-    If there are currently no formats available, the request is queued up and the formats are send out as soon as they are available.
-- `audio-formats-get` `(url, script_name)`  
-    Analogous to `video-formats-get`.
-- `video-format-set` `(url, format_id)`  
-    Set the `format_id` for the given `url`. Setting this to `nil` disables the video format.
-    If `url` is the currently playing video, it will set `ytdl-format` and reload the video.
-    This does not check if the id is actually available, so it is possible to set invalid ids. But that means it is also possible to set something like `bestvideo[height<=1080]`.
-- `audio-format-set` `(url, format_id)`  
-    Analogous to `audio-formats-get`.
-- `register-ui` `(script_name)`  
-    Whenever the menu would get toggled, it instead sends a script message to `script_name`.  
-    For the video menu it sends the `video-formats-menu` message, and for audio it sends the `audio-formats-menu` message.
-
-The following script messages are send out on request or after registering.
-
-- `video-formats` `(url, formats, format_id)`  
-    Sends the available `formats` and current `format_id` for url to the script that requested it via `video-formats-get`.  
-    `formats` is a JSON array that contains all available video formats.  
-    ```
-    formats = Format[]
-    
-    Format {
-        label: string
-        format: string
-    }
-    ```
-    - `label` is the line that quality-menu would display for that format.
-    - `format` is the format id for that format.
-    
-    The JSON array can be converted into a Lua table using `formats = utils.parse_json(formats)`
-- `audio-formats` `(url, formats, format_id)`  
-    Analogous to `video-formats`.
-- `video-formats-menu` `()`  
-    Callback for toggling the video menu.
-- `audio-formats-menu` `()`  
-    Analogous to `video-formats-menu`.
-
 
 ## Plans For Future Enhancement
 - [x] Visual indication of what the current quality level is
