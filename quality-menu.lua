@@ -22,9 +22,6 @@ local opts = {
     select_binding = 'ENTER MBTN_LEFT',
     close_menu_binding = 'ESC MBTN_RIGHT',
 
-    --youtube-dl version(could be youtube-dl or yt-dlp, or something else)
-    ytdl_ver = 'yt-dlp',
-
     --formatting / cursors
     selected_and_active     = '▶  - ',
     selected_and_inactive   = '●  - ',
@@ -57,32 +54,6 @@ local opts = {
     --how many seconds until the quality menu times out
     --setting this to 0 deactivates the timeout
     menu_timeout = 6,
-
-    --use youtube-dl to fetch a list of available formats (overrides quality_strings)
-    fetch_formats = true,
-
-    --list of ytdl-format strings to choose from
-    quality_strings_video = [[
-    [
-    {"4320p" : "bestvideo[height<=?4320p]"},
-    {"2160p" : "bestvideo[height<=?2160]"},
-    {"1440p" : "bestvideo[height<=?1440]"},
-    {"1080p" : "bestvideo[height<=?1080]"},
-    {"720p" : "bestvideo[height<=?720]"},
-    {"480p" : "bestvideo[height<=?480]"},
-    {"360p" : "bestvideo[height<=?360]"},
-    {"240p" : "bestvideo[height<=?240]"},
-    {"144p" : "bestvideo[height<=?144]"}
-    ]
-    ]],
-    quality_strings_audio = [[
-    [
-    {"default" : "bestaudio/best"}
-    ]
-    ]],
-
-    --automatically fetch available formats when opening an url
-    fetch_on_start = true,
 
     --show the video format menu after opening an url
     start_with_menu = false,
@@ -137,39 +108,6 @@ opt.read_options(opts, 'quality-menu')
 -- *_active_id == nil means unknown, *_active_id == '' means disabled
 ---@alias Data { video_formats: Format[], audio_formats: Format[], video_active_id?: string, audio_active_id?: string }
 ---@alias UIState { type: string, type_capitalized: string, name: string , to_other_type: UIState, to_fetching: UIState, to_menu: UIState, is_video: boolean }
-
-do
-    ---@param option_string string
-    ---@param option_name string
-    ---@return Format[]
-    local function parse_predefined(option_string, option_name)
-        ---@type {[string]: string}[]
-        local json, error = utils.parse_json(option_string)
-        if error then
-            msg.error('Error while parsing JSON of option ' .. option_name .. ': ' .. error)
-            return {}
-        end
-        ---@type Format[]
-        local formats = {}
-        for i, format in ipairs(json) do
-            local label, format_string = next(format)
-            formats[i] = {
-                label = label,
-                title = label,
-                id = format_string,
-            }
-        end
-        return formats
-    end
-
-    ---@type Data
-    opts.predefined_data = {
-        video_formats = parse_predefined(opts.quality_strings_video, 'quality_strings_video'),
-        audio_formats = parse_predefined(opts.quality_strings_audio, 'quality_strings_audio'),
-        video_active_id = nil,
-        audio_active_id = nil,
-    }
-end
 
 opts.font_size = tonumber(opts.style_ass_tags:match('\\fs(%d+%.?%d*)')) or mp.get_property_number('osd-font-size') or 25
 opts.curtain_opacity = math.max(math.min(opts.curtain_opacity, 1), 0)
@@ -281,15 +219,8 @@ states.audio_fetching.to_other_type = states.video_fetching
 local open_menu_state = nil
 ---@type string | nil
 local current_url = nil
----@type {[string]: table}
-local currently_fetching = {}
+---@type function | nil
 local destructor = nil
-
-local ytdl = {
-    path = opts.ytdl_ver,
-    searched = false,
-    blacklisted = {}
-}
 
 local menu_open
 local menu_close
@@ -549,109 +480,6 @@ local function process_json_string(json)
     end
 
     return process_json(json_table)
-end
-
----@param url string
-local function download_formats(url)
-    if currently_fetching[url] then return end
-
-    msg.info('fetching available formats...')
-
-    if not (ytdl.searched) then
-        local ytdl_mcd = mp.find_config_file(opts.ytdl_ver)
-        if not (ytdl_mcd == nil) then
-            msg.verbose('found ytdl at: ' .. ytdl_mcd)
-            ytdl.path = ytdl_mcd
-        end
-        ytdl.searched = true
-    end
-
-    local ytdl_format = mp.get_property('ytdl-format')
-    local raw_options = mp.get_property_native('ytdl-raw-options')
-    local command = { ytdl.path, '--no-warnings', '--no-playlist', '-J' }
-    if ytdl_format and #ytdl_format > 0 then
-        command[#command + 1] = '-f'
-        command[#command + 1] = ytdl_format
-    end
-    for param, arg in pairs(raw_options) do
-        command[#command + 1] = '--' .. param
-        if #arg > 0 then
-            command[#command + 1] = arg
-        end
-    end
-    if opts.ytdl_ver == 'yt-dlp' then command[#command + 1] = '--no-match-filter' end
-    command[#command + 1] = '--'
-    command[#command + 1] = url
-
-    msg.verbose('calling ytdl with command: ' .. table.concat(command, ' '))
-
-    --- result.status is exit status
-    --- result.error_string can be empty string, 'killed' or 'init'
-    ---@param success boolean
-    ---@param result { status: integer, stdout: string, stderr: string, error_string: string , killed_by_us: boolean }
-    ---@param error string | nil
-    local function callback(success, result, error)
-        currently_fetching[url] = nil
-        if result.killed_by_us then return end
-        if result.status < 0 or result.stdout == '' or result.error_string ~= '' then
-            osd_message('fetching formats failed...', 2)
-            msg.verbose('status:', result.status)
-            msg.verbose('reason:', result.error_string)
-            msg.verbose('stdout:', result.stdout)
-            msg.verbose('stderr:', result.stderr)
-
-            -- trim our stderr to avoid spurious newlines
-            local ytdl_err = result.stderr:gsub('^%s*(.-)%s*$', '%1')
-            msg.error(ytdl_err)
-            local err = 'ytdl failed: '
-            if result.error_string and result.error_string == 'init' then
-                err = err .. 'not found or not enough permissions'
-            elseif not result.killed_by_us then
-                err = err .. 'unexpected error occurred'
-            else
-                err = string.format('%s returned "%d"', err, result.status)
-            end
-            msg.error(err)
-            if string.find(ytdl_err, 'yt%-dl%.org/bug') then
-                -- check version
-                local version_command = {
-                    name = 'subprocess',
-                    capture_stdout = true,
-                    args = { ytdl.path, '--version' }
-                }
-                local version_string = mp.command_native(version_command).stdout
-                local year, month, day = string.match(version_string, '(%d+).(%d+).(%d+)')
-
-                -- sanity check
-                if (tonumber(year) < 2000) or (tonumber(month) > 12) or
-                    (tonumber(day) > 31) then
-                    return
-                end
-                local version_ts = os.time { year = year, month = month, day = day }
-                if (os.difftime(os.time(), version_ts) > 60 * 60 * 24 * 90) then
-                    msg.warn('It appears that your ytdl version is severely out of date.')
-                end
-            end
-            return
-        end
-
-        msg.verbose('ytdl succeeded!')
-        local data = process_json_string(result.stdout)
-        url_data[url] = data
-        uosc_set_format_counts()
-
-        if not data then return end
-        if open_menu_state and open_menu_state == open_menu_state.to_fetching and url == current_url then
-            menu_open(open_menu_state)
-        end
-    end
-
-    currently_fetching[url] = mp.command_native_async({
-        name = 'subprocess',
-        args = command,
-        capture_stdout = true,
-        capture_stderr = true
-    }, callback)
 end
 
 ---Unknown format falls back on highest ranked format if possible
@@ -1133,18 +961,8 @@ function menu_open(menu_type)
 
     local data = url_data[current_url]
     if not data then
-        if opts.fetch_formats then
-            loading_message(menu_type)
-            download_formats(current_url)
-            return
-        end
-
-        -- shallow clone so that each url has it's own active format ids
-        data = {}
-        for k, v in pairs(opts.predefined_data) do
-            data[k] = v
-        end
-        url_data[current_url] = data
+        loading_message(menu_type)
+        return
     end
     local formats = menu_type.is_video and data.video_formats or data.audio_formats
     local active_format
@@ -1210,12 +1028,6 @@ mp.register_event('start-file', function()
     if opts.start_with_menu and url_changed or open_menu_state then
         menu_open(open_menu_state or states.video_menu)
     end
-end)
-
-mp.register_event('file-loaded', function()
-    if not (opts.fetch_formats and opts.fetch_on_start) then return end
-    if not current_url or url_data[current_url] then return end
-    download_formats(current_url)
 end)
 
 -- run before ytdl_hook, which uses a priority of 10
@@ -1287,3 +1099,18 @@ mp.register_script_message('uosc-version', function(version)
     end)
 end)
 mp.commandv('script-message-to', 'uosc', 'get-version', mp.get_script_name())
+
+mp.register_script_message('ytdl_json', function(url, json)
+    ---@type Data | nil
+    local data = url_data[url]
+    if data == nil then
+        data = process_json_string(json)
+        url_data[url] = data
+        uosc_set_format_counts()
+    end
+
+    if not data then return end
+    if open_menu_state and open_menu_state == open_menu_state.to_fetching and url == current_url then
+        menu_open(open_menu_state)
+    end
+end)
