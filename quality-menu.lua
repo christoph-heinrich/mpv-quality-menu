@@ -918,7 +918,7 @@ local function uosc_menu_open(formats, active_format, menu_type)
     }
 
     menu.items[#menu.items + 1] = {
-        title = menu_type.type_capitalized,
+        title = menu_type.to_other_type.type_capitalized,
         italic = true,
         bold = true,
         hint = 'open menu',
