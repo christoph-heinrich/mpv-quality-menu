@@ -16,19 +16,19 @@ local opt = require('mp.options')
 
 local opts = {
     --key bindings
-    up_binding = "UP WHEEL_UP",
-    down_binding = "DOWN WHEEL_DOWN",
-    select_binding = "ENTER MBTN_LEFT",
-    close_menu_binding = "ESC MBTN_RIGHT",
+    up_binding = 'UP WHEEL_UP',
+    down_binding = 'DOWN WHEEL_DOWN',
+    select_binding = 'ENTER MBTN_LEFT',
+    close_menu_binding = 'ESC MBTN_RIGHT',
 
     --youtube-dl version(could be youtube-dl or yt-dlp, or something else)
-    ytdl_ver = "yt-dlp",
+    ytdl_ver = 'yt-dlp',
 
     --formatting / cursors
-    selected_and_active     = "▶  - ",
-    selected_and_inactive   = "●  - ",
-    unselected_and_active   = "▷ - ",
-    unselected_and_inactive = "○ - ",
+    selected_and_active     = '▶  - ',
+    selected_and_inactive   = '●  - ',
+    unselected_and_active   = '▷ - ',
+    unselected_and_inactive = '○ - ',
 
     --font size scales by window, if false requires larger font and padding sizes
     scale_playlist_by_window = true,
@@ -40,7 +40,7 @@ local opts = {
     --these styles will be used for the whole playlist. More specific styling will need to be hacked in
     --
     --(a monospaced font is recommended but not required)
-    style_ass_tags = "{\\fnmonospace\\fs25\\bord1}",
+    style_ass_tags = '{\\fnmonospace\\fs25\\bord1}',
 
     -- Shift drawing coordinates. Required for mpv.net compatiblity
     shift_x = 0,
@@ -63,20 +63,20 @@ local opts = {
     --list of ytdl-format strings to choose from
     quality_strings_video = [[
     [
-    {"4320p" : "bestvideo[height<=?4320p]"},
-    {"2160p" : "bestvideo[height<=?2160]"},
-    {"1440p" : "bestvideo[height<=?1440]"},
-    {"1080p" : "bestvideo[height<=?1080]"},
-    {"720p" : "bestvideo[height<=?720]"},
-    {"480p" : "bestvideo[height<=?480]"},
-    {"360p" : "bestvideo[height<=?360]"},
-    {"240p" : "bestvideo[height<=?240]"},
-    {"144p" : "bestvideo[height<=?144]"}
+    {'4320p' : 'bestvideo[height<=?4320p]'},
+    {'2160p' : 'bestvideo[height<=?2160]'},
+    {'1440p' : 'bestvideo[height<=?1440]'},
+    {'1080p' : 'bestvideo[height<=?1080]'},
+    {'720p' : 'bestvideo[height<=?720]'},
+    {'480p' : 'bestvideo[height<=?480]'},
+    {'360p' : 'bestvideo[height<=?360]'},
+    {'240p' : 'bestvideo[height<=?240]'},
+    {'144p' : 'bestvideo[height<=?144]'}
     ]
     ]],
     quality_strings_audio = [[
     [
-    {"default" : "bestaudio/best"}
+    {'default' : 'bestaudio/best'}
     ]
     ]],
 
@@ -134,7 +134,7 @@ local opts = {
     sort_video = 'height,fps,tbr,size,format_id',
     sort_audio = 'asr,tbr,size,format_id',
 }
-opt.read_options(opts, "quality-menu")
+opt.read_options(opts, 'quality-menu')
 
 ---@alias Format { properties: {[string]: string}, id: string, label?: string, title?: string, hint?: string }
 -- *_active_id == nil means unknown, *_active_id == '' means disabled
@@ -177,10 +177,10 @@ opts.curtain_opacity = math.max(math.min(opts.curtain_opacity, 1), 0)
 ---@return string[]
 local function string_split(input, separator)
     if separator == nil then
-        separator = "%s"
+        separator = '%s'
     end
     local t = {}
-    for str in string.gmatch(input, "([^" .. separator .. "]+)") do
+    for str in string.gmatch(input, '([^' .. separator .. ']+)') do
         table.insert(t, str)
     end
     return t
@@ -192,7 +192,7 @@ local function strip_minus(strings)
     local stripped_list = {}
     local had_minus = {}
     for i, val in ipairs(strings) do
-        if string.sub(val, 1, 1) == "-" then
+        if string.sub(val, 1, 1) == '-' then
             val = string.sub(val, 2)
             had_minus[val] = true
         end
@@ -235,11 +235,11 @@ end
 
 -- special thanks to reload.lua (https://github.com/4e6/mpv-reload/)
 local function reload_resume()
-    local playlist_pos = mp.get_property_number("playlist-pos")
-    local reload_duration = mp.get_property_native("duration")
-    local time_pos = mp.get_property("time-pos")
+    local playlist_pos = mp.get_property_number('playlist-pos')
+    local reload_duration = mp.get_property_native('duration')
+    local time_pos = mp.get_property('time-pos')
 
-    mp.set_property_number("playlist-pos", playlist_pos)
+    mp.set_property_number('playlist-pos', playlist_pos)
 
     -- Tries to determine live stream vs. pre-recorded VOD. VOD has non-zero
     -- duration property. When reloading VOD, to keep the current time position
@@ -248,11 +248,11 @@ local function reload_resume()
     -- That's the reason we don't pass the offset when reloading streams.
     if reload_duration and reload_duration > 0 then
         local function seeker()
-            mp.commandv("seek", time_pos, "absolute")
+            mp.commandv('seek', time_pos, 'absolute')
             mp.unregister_event(seeker)
         end
 
-        mp.register_event("file-loaded", seeker)
+        mp.register_event('file-loaded', seeker)
     end
 end
 
@@ -330,15 +330,15 @@ local function process_json(json)
     ---@param format FormatRaw
     ---@return boolean
     local function is_video(format)
-        -- "none" means it is not a video
+        -- 'none' means it is not a video
         -- nil means it is unknown
-        return (opts.include_unknown or format.vcodec) and format.vcodec ~= "none" or false
+        return (opts.include_unknown or format.vcodec) and format.vcodec ~= 'none' or false
     end
 
     ---@param format FormatRaw
     ---@return boolean
     local function is_audio(format)
-        return (opts.include_unknown or format.acodec) and format.acodec ~= "none" or false
+        return (opts.include_unknown or format.acodec) and format.acodec ~= 'none' or false
     end
 
     local requested_video = nil
@@ -416,7 +416,7 @@ local function process_json(json)
     ---@return string
     local function scale_filesize(size)
         if size == nil then
-            return ""
+            return ''
         end
 
         local counter = 0
@@ -425,10 +425,10 @@ local function process_json(json)
             counter = counter + 1
         end
 
-        if counter >= 3 then return string.format("%.1fGiB", size)
-        elseif counter >= 2 then return string.format("%.1fMiB", size)
-        elseif counter >= 1 then return string.format("%.1fKiB", size)
-        else return string.format("%.1fB  ", size)
+        if counter >= 3 then return string.format('%.1fGiB', size)
+        elseif counter >= 2 then return string.format('%.1fMiB', size)
+        elseif counter >= 1 then return string.format('%.1fKiB', size)
+        else return string.format('%.1fB  ', size)
         end
     end
 
@@ -436,7 +436,7 @@ local function process_json(json)
     ---@return string
     local function scale_bitrate(bitrate)
         if bitrate == nil then
-            return ""
+            return ''
         end
 
         local counter = 0
@@ -445,24 +445,24 @@ local function process_json(json)
             counter = counter + 1
         end
 
-        if counter >= 2 then return string.format("%.1fGbps", bitrate)
-        elseif counter >= 1 then return string.format("%.1fMbps", bitrate)
-        else return string.format("%.1fKbps", bitrate)
+        if counter >= 2 then return string.format('%.1fGbps', bitrate)
+        elseif counter >= 1 then return string.format('%.1fMbps', bitrate)
+        else return string.format('%.1fKbps', bitrate)
         end
     end
 
     ---@param format FormatRaw
     local function format_special_fields(format)
-        local size_prefix = not format.filesize and format.filesize_approx and "~" or ""
+        local size_prefix = not format.filesize and format.filesize_approx and '~' or ''
         ---@diagnostic disable-next-line: param-type-mismatch
         format.size = (size_prefix) .. scale_filesize(format.size)
-        format.frame_rate = format.fps and format.fps .. "fps" or ""
+        format.frame_rate = format.fps and format.fps .. 'fps' or ''
         format.bitrate_total = scale_bitrate(format.tbr)
         format.bitrate_video = scale_bitrate(format.vbr)
         format.bitrate_audio = scale_bitrate(format.abr)
-        format.codec_video = format.vcodec == nil and "unknown" or format.vcodec == "none" and "" or format.vcodec
-        format.codec_audio = format.acodec == nil and "unknown" or format.acodec == "none" and "" or format.acodec
-        format.audio_sample_rate = format.asr and tostring(format.asr) .. "Hz" or ""
+        format.codec_video = format.vcodec == nil and 'unknown' or format.vcodec == 'none' and '' or format.vcodec
+        format.codec_audio = format.acodec == nil and 'unknown' or format.acodec == 'none' and '' or format.acodec
+        format.audio_sample_rate = format.asr and tostring(format.asr) .. 'Hz' or ''
     end
 
     for _, format in ipairs(all_formats) do
@@ -478,7 +478,7 @@ local function process_json(json)
         for i, format in ipairs(raw_formats) do
             local props = {}
             for _, prop in ipairs(properties) do
-                props[prop] = tostring(format[prop] or "")
+                props[prop] = tostring(format[prop] or '')
             end
             formats[i] = { properties = props, id = format.format_id }
         end
@@ -495,9 +495,9 @@ end
 
 ---@return string | nil
 local function get_url()
-    local path = mp.get_property("path")
+    local path = mp.get_property('path')
     if not path then return nil end
-    path = path:gsub("ytdl://", "") -- Strip possible ytdl:// prefix.
+    path = path:gsub('ytdl://', '') -- Strip possible ytdl:// prefix.
 
     ---@param str string
     ---@return boolean
@@ -506,9 +506,9 @@ local function get_url()
         -- https://stackoverflow.com/questions/3809401/what-is-a-good-regular-expression-to-match-a-url
         return nil ~=
             str:match(
-                "^[%w]-://[-a-zA-Z0-9@:%._\\+~#=]+%." ..
-                "[a-zA-Z0-9()][a-zA-Z0-9()]?[a-zA-Z0-9()]?[a-zA-Z0-9()]?[a-zA-Z0-9()]?[a-zA-Z0-9()]?" ..
-                "[-a-zA-Z0-9()@:%_\\+.~#?&/=]*")
+                '^[%w]-://[-a-zA-Z0-9@:%._\\+~#=]+%.' ..
+                '[a-zA-Z0-9()][a-zA-Z0-9()]?[a-zA-Z0-9()]?[a-zA-Z0-9()]?[a-zA-Z0-9()]?[a-zA-Z0-9()]?' ..
+                '[-a-zA-Z0-9()@:%_\\+.~#?&/=]*')
     end
 
     return is_url(path) and path or nil
@@ -539,9 +539,9 @@ local function process_json_string(json)
     local json_table, err = utils.parse_json(json)
 
     if (json_table == nil) then
-        osd_message("fetching formats failed...", 2)
-        if err == nil then err = "unexpected error occurred" end
-        msg.error("failed to parse JSON data: " .. err)
+        osd_message('fetching formats failed...', 2)
+        if err == nil then err = 'unexpected error occurred' end
+        msg.error('failed to parse JSON data: ' .. err)
         return
     end
 
@@ -556,26 +556,26 @@ end
 local function download_formats(url)
     if currently_fetching[url] then return end
 
-    msg.info("fetching available formats...")
+    msg.info('fetching available formats...')
 
     if not (ytdl.searched) then
         local ytdl_mcd = mp.find_config_file(opts.ytdl_ver)
         if not (ytdl_mcd == nil) then
-            msg.verbose("found ytdl at: " .. ytdl_mcd)
+            msg.verbose('found ytdl at: ' .. ytdl_mcd)
             ytdl.path = ytdl_mcd
         end
         ytdl.searched = true
     end
 
-    local ytdl_format = mp.get_property("ytdl-format")
-    local command = { ytdl.path, "--no-warnings", "--no-playlist", "-J", url }
+    local ytdl_format = mp.get_property('ytdl-format')
+    local command = { ytdl.path, '--no-warnings', '--no-playlist', '-J', url }
     if ytdl_format and #ytdl_format > 0 then
-        command[#command + 1] = "-f"
+        command[#command + 1] = '-f'
         command[#command + 1] = ytdl_format
     end
-    if opts.ytdl_ver == "yt-dlp" then command[#command + 1] = "--no-match-filter" end
+    if opts.ytdl_ver == 'yt-dlp' then command[#command + 1] = '--no-match-filter' end
 
-    msg.verbose("calling ytdl with command: " .. table.concat(command, " "))
+    msg.verbose('calling ytdl with command: ' .. table.concat(command, ' '))
 
     --- result.status is exit status
     --- result.error_string can be empty string, 'killed' or 'init'
@@ -585,34 +585,34 @@ local function download_formats(url)
     local function callback(success, result, error)
         currently_fetching[url] = nil
         if result.killed_by_us then return end
-        if result.status < 0 or result.stdout == "" or result.error_string ~= "" then
-            osd_message("fetching formats failed...", 2)
-            msg.verbose("status:", result.status)
-            msg.verbose("reason:", result.error_string)
-            msg.verbose("stdout:", result.stdout)
-            msg.verbose("stderr:", result.stderr)
+        if result.status < 0 or result.stdout == '' or result.error_string ~= '' then
+            osd_message('fetching formats failed...', 2)
+            msg.verbose('status:', result.status)
+            msg.verbose('reason:', result.error_string)
+            msg.verbose('stdout:', result.stdout)
+            msg.verbose('stderr:', result.stderr)
 
             -- trim our stderr to avoid spurious newlines
-            local ytdl_err = result.stderr:gsub("^%s*(.-)%s*$", "%1")
+            local ytdl_err = result.stderr:gsub('^%s*(.-)%s*$', '%1')
             msg.error(ytdl_err)
-            local err = "ytdl failed: "
-            if result.error_string and result.error_string == "init" then
-                err = err .. "not found or not enough permissions"
+            local err = 'ytdl failed: '
+            if result.error_string and result.error_string == 'init' then
+                err = err .. 'not found or not enough permissions'
             elseif not result.killed_by_us then
-                err = err .. "unexpected error occurred"
+                err = err .. 'unexpected error occurred'
             else
-                err = string.format("%s returned '%d'", err, result.status)
+                err = string.format('%s returned "%d"', err, result.status)
             end
             msg.error(err)
-            if string.find(ytdl_err, "yt%-dl%.org/bug") then
+            if string.find(ytdl_err, 'yt%-dl%.org/bug') then
                 -- check version
                 local version_command = {
-                    name = "subprocess",
+                    name = 'subprocess',
                     capture_stdout = true,
-                    args = { ytdl.path, "--version" }
+                    args = { ytdl.path, '--version' }
                 }
                 local version_string = mp.command_native(version_command).stdout
-                local year, month, day = string.match(version_string, "(%d+).(%d+).(%d+)")
+                local year, month, day = string.match(version_string, '(%d+).(%d+).(%d+)')
 
                 -- sanity check
                 if (tonumber(year) < 2000) or (tonumber(month) > 12) or
@@ -621,13 +621,13 @@ local function download_formats(url)
                 end
                 local version_ts = os.time { year = year, month = month, day = day }
                 if (os.difftime(os.time(), version_ts) > 60 * 60 * 24 * 90) then
-                    msg.warn("It appears that your ytdl version is severely out of date.")
+                    msg.warn('It appears that your ytdl version is severely out of date.')
                 end
             end
             return
         end
 
-        msg.verbose("ytdl succeeded!")
+        msg.verbose('ytdl succeeded!')
         local data = process_json_string(result.stdout)
         url_data[url] = data
         uosc_set_format_counts()
@@ -639,7 +639,7 @@ local function download_formats(url)
     end
 
     currently_fetching[url] = mp.command_native_async({
-        name = "subprocess",
+        name = 'subprocess',
         args = command,
         capture_stdout = true,
         capture_stderr = true
@@ -659,13 +659,13 @@ end
 ---@return string
 local function format_string(video_id, audio_id)
     if #video_id > 0 and #audio_id > 0 then
-        return video_id .. "+" .. audio_id
+        return video_id .. '+' .. audio_id
     elseif #video_id > 0 then
         return video_id
     elseif #audio_id > 0 then
         return audio_id
     else
-        return ""
+        return ''
     end
 end
 
@@ -676,8 +676,8 @@ local function set_format(url, video_format, audio_format)
     if (url_data[url].video_active_id ~= video_format or url_data[url].audio_active_id ~= audio_format) then
         url_data[url].video_active_id = video_format
         url_data[url].audio_active_id = audio_format
-        if url == mp.get_property("path") then
-            mp.set_property("ytdl-format", format_string(video_format, audio_format))
+        if url == mp.get_property('path') then
+            mp.set_property('ytdl-format', format_string(video_format, audio_format))
             reload_resume()
         end
     end
@@ -710,7 +710,7 @@ local function text_menu_open(formats, active_format, menu_type)
 
         if i ~= selected and i == active then return opts.unselected_and_active
         elseif i ~= selected then return opts.unselected_and_inactive end
-        return "> " --shouldn't get here.
+        return '> ' --shouldn't get here.
     end
 
     local width, height
@@ -747,12 +747,12 @@ local function text_menu_open(formats, active_format, menu_type)
 
         if #formats > 0 then
             for i, format in ipairs(formats) do
-                ass:append(choose_prefix(i) .. format.label .. "\\N")
+                ass:append(choose_prefix(i) .. format.label .. '\\N')
             end
-            ass:append(choose_prefix(#formats + 1) .. "Disabled\\N")
+            ass:append(choose_prefix(#formats + 1) .. 'Disabled\\N')
             ass:append(choose_prefix(#formats + 2) .. menu_type.to_other_type.type_capitalized .. ' menu')
         else
-            ass:append("no formats found\\N")
+            ass:append('no formats found\\N')
             ass:append(opts.selected_and_inactive .. menu_type.to_other_type.type_capitalized .. ' menu')
         end
 
@@ -774,10 +774,10 @@ local function text_menu_open(formats, active_format, menu_type)
         local shared_props = mp.get_property_native('shared-script-properties')
         local val = shared_props['osc-margins']
         if val then
-            -- formatted as "%f,%f,%f,%f" with left, right, top, bottom, each
+            -- formatted as '%f,%f,%f,%f' with left, right, top, bottom, each
             -- value being the border size as ratio of the window size (0.0-1.0)
             local vals = {}
-            for v in string.gmatch(val, "[^,]+") do
+            for v in string.gmatch(val, '[^,]+') do
                 vals[#vals + 1] = tonumber(v)
             end
             margin_top = vals[3] -- top
@@ -816,7 +816,7 @@ local function text_menu_open(formats, active_format, menu_type)
             return
         end
         local i = 1
-        for key in keys:gmatch("[^%s]+") do
+        for key in keys:gmatch('[^%s]+') do
             local prefix = i == 1 and '' or i
             mp.add_forced_key_binding(key, name .. prefix, func, opts)
             i = i + 1
@@ -831,7 +831,7 @@ local function text_menu_open(formats, active_format, menu_type)
             return
         end
         local i = 1
-        for key in keys:gmatch("[^%s]+") do
+        for key in keys:gmatch('[^%s]+') do
             local prefix = i == 1 and '' or i
             mp.remove_key_binding(name .. prefix)
             i = i + 1
@@ -841,10 +841,10 @@ local function text_menu_open(formats, active_format, menu_type)
     -- make sure observers are cleaned up
     if open_menu_state and open_menu_state == open_menu_state.to_menu and destructor then destructor() end
     destructor = function()
-        unbind_keys(opts.up_binding, "move_up")
-        unbind_keys(opts.down_binding, "move_down")
-        unbind_keys(opts.select_binding, "select")
-        unbind_keys(opts.close_menu_binding, "close")
+        unbind_keys(opts.up_binding, 'move_up')
+        unbind_keys(opts.down_binding, 'move_down')
+        unbind_keys(opts.select_binding, 'select')
+        unbind_keys(opts.close_menu_binding, 'close')
         mp.unobserve_property(update_dimensions)
         mp.unobserve_property(update_margins)
     end
@@ -855,10 +855,10 @@ local function text_menu_open(formats, active_format, menu_type)
         osd_timer:resume()
     end
 
-    bind_keys(opts.up_binding, "move_up", function() selected_move( -1) end, { repeatable = true })
-    bind_keys(opts.down_binding, "move_down", function() selected_move(1) end, { repeatable = true })
-    bind_keys(opts.close_menu_binding, "close", menu_close)
-    bind_keys(opts.select_binding, "select", function()
+    bind_keys(opts.up_binding, 'move_up', function() selected_move( -1) end, { repeatable = true })
+    bind_keys(opts.down_binding, 'move_down', function() selected_move(1) end, { repeatable = true })
+    bind_keys(opts.close_menu_binding, 'close', menu_close)
+    bind_keys(opts.select_binding, 'select', function()
         if selected == num_options then
             mp.unobserve_property(update_dimensions)
             mp.unobserve_property(update_margins)
@@ -1025,7 +1025,7 @@ local function format_table(formats, columns, column_align_left)
         for j, column in ipairs(show_columns) do
             -- lua errors out with width > 99 ("invalid conversion specification")
             local width = math.min(column.width * (column.align_left and -1 or 1), 99)
-            row[j] = string.format('%' .. width .. 's', format.properties[column.prop] or "")
+            row[j] = string.format('%' .. width .. 's', format.properties[column.prop] or '')
         end
         rows[i] = table.concat(row, string.format('%' .. spacing .. 's', '')):gsub('%s+$', '')
     end
@@ -1100,7 +1100,7 @@ local function loading_message(menu_type)
             mp.commandv('script-message-to', 'uosc', 'open-menu', json)
         end
     else
-        osd_message("fetching available " .. menu_type.type .. " formats...", 60)
+        osd_message('fetching available ' .. menu_type.type .. ' formats...', 60)
     end
     open_menu_state = menu_type
 end
@@ -1130,7 +1130,7 @@ function menu_open(menu_type)
     if menu_type.is_video then active_format = data.video_active_id
     else active_format = data.audio_active_id end
 
-    msg.verbose("current ytdl-format: " ..
+    msg.verbose('current ytdl-format: ' ..
         format_string(
             sanitize_format_id(data.video_active_id, data.video_formats),
             sanitize_format_id(data.audio_active_id, data.audio_formats)
@@ -1176,11 +1176,11 @@ function video_formats_toggle() toggle_menu(states.video_menu) end
 function audio_formats_toggle() toggle_menu(states.audio_menu) end
 
 -- keybind to launch menu
-mp.add_key_binding(nil, "video_formats_toggle", video_formats_toggle)
-mp.add_key_binding(nil, "audio_formats_toggle", audio_formats_toggle)
-mp.add_key_binding(nil, "reload", reload_resume)
+mp.add_key_binding(nil, 'video_formats_toggle', video_formats_toggle)
+mp.add_key_binding(nil, 'audio_formats_toggle', audio_formats_toggle)
+mp.add_key_binding(nil, 'reload', reload_resume)
 
-local original_format = mp.get_property("ytdl-format")
+local original_format = mp.get_property('ytdl-format')
 local function file_start()
     uosc_set_format_counts()
 
@@ -1191,11 +1191,11 @@ local function file_start()
 
     if opts.reset_format and current_url and new_url ~= current_url then
         if data and data.video_active_id and data.audio_active_id then
-            msg.verbose("setting previously set format")
-            mp.set_property("ytdl-format", format_string(data.video_active_id, data.audio_active_id))
+            msg.verbose('setting previously set format')
+            mp.set_property('ytdl-format', format_string(data.video_active_id, data.audio_active_id))
         else
-            msg.verbose("setting original format")
-            mp.set_property("ytdl-format", original_format)
+            msg.verbose('setting original format')
+            mp.set_property('ytdl-format', original_format)
         end
         reload_resume()
     end
@@ -1210,7 +1210,7 @@ local function file_start()
     if open_menu_state then menu_open(open_menu_state) end
 end
 
-mp.register_event("start-file", file_start)
+mp.register_event('start-file', file_start)
 
 ---@param url string
 ---@param format_id string
