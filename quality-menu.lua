@@ -1,4 +1,4 @@
--- quality-menu 3.1.1 - 2023-Feb-04
+-- quality-menu 4.0.0 - 2023-Feb-15
 -- https://github.com/christoph-heinrich/mpv-quality-menu
 --
 -- Change the stream video and audio quality on the fly.
@@ -1255,8 +1255,7 @@ mp.register_script_message('uosc-version', function(version)
         return false
     end
 
-    local min_version = '4.5.1'
-    min_version = '4.5.0' -- todo: remove for full release
+    local min_version = '4.6.0'
     uosc_available = not semver_comp(version, min_version)
     if not uosc_available then return end
     uosc_set_format_counts()

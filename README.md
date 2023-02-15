@@ -16,7 +16,7 @@ Simply open the video or audio menu, select your prefered format and confirm you
 - Simple reload functionality
 - Columns and their order are configurable
 - **(optional)** Graphical menu via [uosc](https://github.com/tomasklaen/uosc) integration  
-    Note: Requires uosc 4.5.1 or newer.
+    Note: Requires uosc 4.6.0 or newer.
 
 ## OSC extension
 **(optional)** An extended version of the OSC is available that includes a button to display the quality menu.
