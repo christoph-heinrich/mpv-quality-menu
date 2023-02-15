@@ -1244,9 +1244,11 @@ mp.register_script_message('uosc-version', function(version)
     local function semver_comp(v1, v2)
         local v1_iterator = v1:gmatch('%d+')
         local v2_iterator = v2:gmatch('%d+')
-        for v2_num in v2_iterator do
-            local v1_num = v1_iterator()
-            if not v1_num then return true end
+        for v2_num_str in v2_iterator do
+            local v1_num_str = v1_iterator()
+            if not v1_num_str then return true end
+            local v1_num = tonumber(v1_num_str)
+            local v2_num = tonumber(v2_num_str)
             if v1_num < v2_num then return true end
             if v1_num > v2_num then return false end
         end
