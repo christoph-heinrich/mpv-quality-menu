@@ -1181,14 +1181,16 @@ mp.register_event('start-file', function()
     -- new path isn't an url
     if not new_url then return menu_close() end
 
-    if opts.fetch_formats and opts.fetch_on_start and not url_data[new_url] then
-        download_formats(new_url)
-    end
-
     -- open or update menu
     if opts.start_with_menu and url_changed or open_menu_state then
         menu_open(open_menu_state or states.video_menu)
     end
+end)
+
+mp.register_event('file-loaded', function()
+    if not (opts.fetch_formats and opts.fetch_on_start) then return end
+    if not current_url or url_data[current_url] then return end
+    download_formats(current_url)
 end)
 
 -- run before ytdl_hook, which uses a priority of 10
