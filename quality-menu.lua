@@ -522,9 +522,7 @@ local url_data = {}
 local function uosc_set_format_counts()
     if not uosc_available then return end
 
-    local new_path = get_url()
-
-    local data = url_data[new_path]
+    local data = url_data[current_url]
     if data then
         mp.commandv('script-message-to', 'uosc', 'set', 'vformats', #data.video_formats)
         mp.commandv('script-message-to', 'uosc', 'set', 'aformats', #data.audio_formats)
@@ -677,10 +675,7 @@ local function set_format(url, video_format, audio_format)
     if (url_data[url].video_active_id ~= video_format or url_data[url].audio_active_id ~= audio_format) then
         url_data[url].video_active_id = video_format
         url_data[url].audio_active_id = audio_format
-        if url == mp.get_property('path') then
-            mp.set_property('ytdl-format', format_string(video_format, audio_format))
-            reload_resume()
-        end
+        if url == mp.get_property('path') then reload_resume() end
     end
 end
 
@@ -1131,11 +1126,7 @@ function menu_open(menu_type)
     if menu_type.is_video then active_format = data.video_active_id
     else active_format = data.audio_active_id end
 
-    msg.verbose('current ytdl-format: ' ..
-        format_string(
-            sanitize_format_id(data.video_active_id, data.video_formats),
-            sanitize_format_id(data.audio_active_id, data.audio_formats)
-        ))
+    msg.verbose('current ytdl-format: ' .. mp.get_property('ytdl-format', ''))
 
     ensure_menu_data_filled(formats, menu_type)
     if uosc_available then uosc_menu_open(formats, active_format, menu_type)
@@ -1181,23 +1172,34 @@ mp.add_key_binding(nil, 'video_formats_toggle', video_formats_toggle)
 mp.add_key_binding(nil, 'audio_formats_toggle', audio_formats_toggle)
 mp.add_key_binding(nil, 'reload', reload_resume)
 
-local function file_start()
+mp.register_event('start-file', function()
+    local new_url = get_url()
+    local url_changed = current_url ~= new_url
+    current_url = new_url
     uosc_set_format_counts()
 
-    local new_url = get_url()
+    -- new path isn't an url
     if not new_url then return menu_close() end
 
     if opts.fetch_formats and opts.fetch_on_start and not url_data[new_url] then
         download_formats(new_url)
     end
-    if not open_menu_state and opts.start_with_menu and new_url ~= current_url then
-        video_formats_toggle()
-    end
-    current_url = new_url
-    if open_menu_state then menu_open(open_menu_state) end
-end
 
-mp.register_event('start-file', file_start)
+    -- open or update menu
+    if opts.start_with_menu and url_changed or open_menu_state then
+        menu_open(open_menu_state or states.video_menu)
+    end
+end)
+
+-- run before ytdl_hook, which uses a priority of 10
+mp.add_hook('on_load', 9, function()
+    local path = mp.get_property('path')
+    local data = url_data[path]
+    if not (data and data.video_active_id and data.audio_active_id) then return end
+    local format = format_string(data.video_active_id, data.audio_active_id)
+    msg.verbose('setting ytdl-format: ' .. format)
+    mp.set_property('file-local-options/ytdl-format', format)
+end)
 
 ---@param url string
 ---@param format_id string
