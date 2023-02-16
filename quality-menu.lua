@@ -80,10 +80,6 @@ local opts = {
     ]
     ]],
 
-    --reset ytdl-format to the original format string when changing files (e.g. going to the next playlist entry)
-    --if file was opened previously, reset to previously selected format
-    reset_format = true,
-
     --automatically fetch available formats when opening an url
     fetch_on_start = true,
 
@@ -1185,27 +1181,13 @@ mp.add_key_binding(nil, 'video_formats_toggle', video_formats_toggle)
 mp.add_key_binding(nil, 'audio_formats_toggle', audio_formats_toggle)
 mp.add_key_binding(nil, 'reload', reload_resume)
 
-local original_format = mp.get_property('ytdl-format')
 local function file_start()
     uosc_set_format_counts()
 
     local new_url = get_url()
     if not new_url then return menu_close() end
 
-    local data = url_data[new_url]
-
-    if opts.reset_format and current_url and new_url ~= current_url then
-        if data and data.video_active_id and data.audio_active_id then
-            msg.verbose('setting previously set format')
-            mp.set_property('ytdl-format', format_string(data.video_active_id, data.audio_active_id))
-        else
-            msg.verbose('setting original format')
-            mp.set_property('ytdl-format', original_format)
-        end
-        reload_resume()
-    end
-
-    if opts.fetch_formats and opts.fetch_on_start and not data then
+    if opts.fetch_formats and opts.fetch_on_start and not url_data[new_url] then
         download_formats(new_url)
     end
     if not open_menu_state and opts.start_with_menu and new_url ~= current_url then
