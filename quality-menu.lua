@@ -567,12 +567,21 @@ local function download_formats(url)
     end
 
     local ytdl_format = mp.get_property('ytdl-format')
-    local command = { ytdl.path, '--no-warnings', '--no-playlist', '-J', url }
+    local raw_options = mp.get_property_native('ytdl-raw-options')
+    local command = { ytdl.path, '--no-warnings', '--no-playlist', '-J' }
     if ytdl_format and #ytdl_format > 0 then
         command[#command + 1] = '-f'
         command[#command + 1] = ytdl_format
     end
+    for param, arg in pairs(raw_options) do
+        command[#command + 1] = '--' .. param
+        if #arg > 0 then
+            command[#command + 1] = arg
+        end
+    end
     if opts.ytdl_ver == 'yt-dlp' then command[#command + 1] = '--no-match-filter' end
+    command[#command + 1] = '--'
+    command[#command + 1] = url
 
     msg.verbose('calling ytdl with command: ' .. table.concat(command, ' '))
 
