@@ -21,9 +21,6 @@ local opts = {
     select_binding = 'ENTER MBTN_LEFT',
     close_menu_binding = 'ESC MBTN_RIGHT',
 
-    --youtube-dl version(could be youtube-dl or yt-dlp, or something else)
-    ytdl_ver = 'yt-dlp',
-
     --formatting / cursors
     selected_and_active     = '▶  - ',
     selected_and_inactive   = '●  - ',
@@ -285,11 +282,47 @@ local current_url = nil
 local currently_fetching = {}
 local destructor = nil
 
+-- from https://github.com/mpv-player/mpv/blob/14504e0559f8de95d16a123f1a4b5218425ba36b/player/lua/ytdl_hook.lua#L5-L24
 local ytdl = {
-    path = opts.ytdl_ver,
+    path = '',
+    paths_to_search = { 'yt-dlp', 'yt-dlp_x86', 'youtube-dl' },
     searched = false,
     blacklisted = {}
 }
+
+local o = {
+    exclude = '',
+    try_ytdl_first = false,
+    use_manifests = false,
+    all_formats = false,
+    force_all_formats = true,
+    ytdl_path = '',
+}
+
+opt.read_options(o, 'ytdl_hook', function()
+    ytdl.blacklisted = {} -- reparse o.exclude next time
+    ytdl.searched = false
+end)
+
+-- from https://github.com/mpv-player/mpv/blob/14504e0559f8de95d16a123f1a4b5218425ba36b/player/lua/ytdl_hook.lua#L195C8-L212
+local function is_blacklisted(url)
+    if o.exclude == '' then return false end
+    if #ytdl.blacklisted == 0 then
+        for match in o.exclude:gmatch('%|?([^|]+)') do
+            ytdl.blacklisted[#ytdl.blacklisted + 1] = match
+        end
+    end
+    if #ytdl.blacklisted > 0 then
+        url = url:match('https?://(.+)')
+        for _, exclude in ipairs(ytdl.blacklisted) do
+            if url:match(exclude) then
+                msg.verbose('URL matches excluded substring. Skipping.')
+                return true
+            end
+        end
+    end
+    return false
+end
 
 local menu_open
 local menu_close
@@ -512,7 +545,7 @@ local function get_url()
                 '[-a-zA-Z0-9()@:%_\\+.~#?&/=]*')
     end
 
-    return is_url(path) and path or nil
+    return is_url(path) and not is_blacklisted(path) and path or nil
 end
 
 local uosc_available = false
@@ -551,6 +584,10 @@ local function process_json_string(json)
     return process_json(json_table)
 end
 
+local function platform_is_windows()
+    return mp.get_property_native("platform") == "windows"
+end
+
 ---@param url string
 local function download_formats(url)
     if currently_fetching[url] then return end
@@ -558,11 +595,44 @@ local function download_formats(url)
     msg.info('fetching available formats...')
 
     if not (ytdl.searched) then
-        local ytdl_mcd = mp.find_config_file(opts.ytdl_ver)
-        if not (ytdl_mcd == nil) then
-            msg.verbose('found ytdl at: ' .. ytdl_mcd)
-            ytdl.path = ytdl_mcd
+
+        local function try_exec(path)
+            return mp.command_native({
+                name = 'subprocess',
+                capture_stdout = true,
+                args = { path, '--version' }
+            })
         end
+        -- from https://github.com/mpv-player/mpv/blob/14504e0559f8de95d16a123f1a4b5218425ba36b/player/lua/ytdl_hook.lua#L827C1-L859
+        local is_windows = mp.get_property_native('platform') == 'windows'
+        local separator = is_windows and ';' or ':'
+        if o.ytdl_path:match('[^' .. separator .. ']') then
+            ytdl.paths_to_search = {}
+            for path in o.ytdl_path:gmatch('[^' .. separator .. ']+') do
+                table.insert(ytdl.paths_to_search, path)
+            end
+        end
+
+        for _, path in pairs(ytdl.paths_to_search) do
+            -- search for youtube-dl in mpv's config dir
+            local exesuf = is_windows and '.exe' or ''
+            local ytdl_cmd = mp.find_config_file(path .. exesuf)
+            if ytdl_cmd then
+                msg.verbose('Found youtube-dl at: ' .. ytdl_cmd)
+                ytdl.path = ytdl_cmd
+                break
+            else
+                msg.verbose('No youtube-dl found with path ' .. path .. exesuf .. ' in config directories')
+                if try_exec(path).error_string == 'init' then
+                    msg.verbose('youtube-dl with path ' .. path .. exesuf .. ' not found in PATH or not enough permissions')
+                else
+                    msg.verbose('Found youtube-dl with path ' .. path .. exesuf .. ' in PATH')
+                    ytdl.path = path
+                    break
+                end
+            end
+        end
+
         ytdl.searched = true
     end
 
