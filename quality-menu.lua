@@ -775,29 +775,47 @@ local function text_menu_open(formats, active_format, menu_type)
         draw_menu()
     end
 
-    local function update_margins()
-        local shared_props = mp.get_property_native('shared-script-properties')
-        local val = shared_props['osc-margins']
-        if val then
-            -- formatted as '%f,%f,%f,%f' with left, right, top, bottom, each
-            -- value being the border size as ratio of the window size (0.0-1.0)
-            local vals = {}
-            for v in string.gmatch(val, '[^,]+') do
-                vals[#vals + 1] = tonumber(v)
+    local update_margins;
+    if utils.shared_script_property_set then
+        update_margins = function()
+            local shared_props = mp.get_property_native('shared-script-properties')
+            local val = shared_props['osc-margins']
+            if val then
+                -- formatted as '%f,%f,%f,%f' with left, right, top, bottom, each
+                -- value being the border size as ratio of the window size (0.0-1.0)
+                local vals = {}
+                for v in string.gmatch(val, '[^,]+') do
+                    vals[#vals + 1] = tonumber(v)
+                end
+                margin_top = vals[3] -- top
+                margin_bottom = vals[4] -- bottom
+            else
+                margin_top = 0
+                margin_bottom = 0
             end
-            margin_top = vals[3] -- top
-            margin_bottom = vals[4] -- bottom
-        else
-            margin_top = 0
-            margin_bottom = 0
+            draw_menu()
         end
-        draw_menu()
+        mp.observe_property('shared-script-properties', 'native', update_margins)
+    else
+        update_margins = function(_, val)
+            if not val then
+                val = mp.get_property_native('user-data/osc/margins')
+            end
+            if val then
+                margin_top = val.t
+                margin_bottom = val.b
+            else
+                margin_top = 0
+                margin_bottom = 0
+            end
+            draw_menu()
+        end
+        mp.observe_property('user-data/osc/margins', 'native', update_margins)
     end
 
     update_dimensions()
     update_margins()
     mp.observe_property('osd-dimensions', 'native', update_dimensions)
-    mp.observe_property('shared-script-properties', 'native', update_margins)
 
     ---@param amount integer
     local function selected_move(amount)
