@@ -236,11 +236,10 @@ end
 
 -- special thanks to reload.lua (https://github.com/4e6/mpv-reload/)
 local function reload_resume()
-    local playlist_pos = mp.get_property_number('playlist-pos')
     local reload_duration = mp.get_property_native('duration')
     local time_pos = mp.get_property('time-pos')
 
-    mp.set_property_number('playlist-pos', playlist_pos)
+    mp.command('playlist-play-index current')
 
     -- Tries to determine live stream vs. pre-recorded VOD. VOD has non-zero
     -- duration property. When reloading VOD, to keep the current time position
@@ -249,7 +248,7 @@ local function reload_resume()
     -- That's the reason we don't pass the offset when reloading streams.
     if reload_duration and reload_duration > 0 then
         local function seeker()
-            mp.commandv('seek', time_pos, 'absolute')
+            mp.commandv('seek', time_pos, 'absolute+exact')
             mp.unregister_event(seeker)
         end
 
