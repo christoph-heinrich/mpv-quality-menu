@@ -13,6 +13,7 @@ local utils = require 'mp.utils'
 local msg = require 'mp.msg'
 local assdraw = require 'mp.assdraw'
 local opt = require('mp.options')
+local script_name = mp.get_script_name()
 
 local opts = {
     --key bindings
@@ -931,7 +932,7 @@ local function uosc_menu_open(formats, active_format, menu_type)
         keep_open = true,
         on_close = {
             'script-message-to',
-            'quality_menu',
+            script_name,
             'uosc-menu-closed',
             menu_type.name,
         }
@@ -944,7 +945,7 @@ local function uosc_menu_open(formats, active_format, menu_type)
         hint = 'open menu',
         value = {
             'script-message-to',
-            'quality_menu',
+            script_name,
             menu_type.to_other_type.type .. '_formats_toggle',
         },
     }
@@ -956,7 +957,7 @@ local function uosc_menu_open(formats, active_format, menu_type)
         active = active_format == '',
         value = {
             'script-message-to',
-            'quality_menu',
+            script_name,
             menu_type.type .. '-format-set',
             current_url,
             '',
@@ -970,7 +971,7 @@ local function uosc_menu_open(formats, active_format, menu_type)
             active = format.id == active_format,
             value = {
                 'script-message-to',
-                'quality_menu',
+                script_name,
                 menu_type.type .. '-format-set',
                 current_url,
                 format.id,
@@ -1110,7 +1111,7 @@ local function loading_message(menu_type)
             keep_open = true,
             on_close = {
                 'script-message-to',
-                'quality_menu',
+                script_name,
                 'uosc-menu-closed',
                 menu_type.name
             }
@@ -1274,7 +1275,7 @@ mp.register_script_message('uosc-version', function(version)
         'uosc',
         'overwrite-binding',
         'stream-quality',
-        'script-binding quality_menu/video_formats_toggle'
+        'script-binding ' .. script_name .. '/video_formats_toggle'
     )
     ---@param name string
     mp.register_script_message('uosc-menu-closed', function(name)
