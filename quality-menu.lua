@@ -748,7 +748,7 @@ local function text_menu_open(formats, active_format, menu_type)
         local clip_top = math.floor(margin_top * height + 0.5)
         local clip_bottom = math.floor((1 - margin_bottom) * height + 0.5)
         local clipping_coordinates = '0,' .. clip_top .. ',' .. width .. ',' .. clip_bottom
-        ass:append('{\\rDefault\\q2\\clip(' .. clipping_coordinates .. ')}' .. opts.style_ass_tags)
+        ass:append('{\\rDefault\\an7\\q2\\clip(' .. clipping_coordinates .. ')}' .. opts.style_ass_tags)
 
         if #formats > 0 then
             for i, format in ipairs(formats) do
