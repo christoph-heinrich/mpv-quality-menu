@@ -1,4 +1,4 @@
--- quality-menu 4.1.1 - 2023-Oct-22
+-- quality-menu 4.1.2 - 2024-Sep-23
 -- https://github.com/christoph-heinrich/mpv-quality-menu
 --
 -- Change the stream video and audio quality on the fly.
