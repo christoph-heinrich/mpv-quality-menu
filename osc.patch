@@ -1,8 +1,8 @@
-diff --git a/osc.lua b/osc.lua
-index 0a9965b..afd6047 100644
+diff --git a/../mpv/player/lua/osc.lua b/osc.lua
+index 6132aa9..5c73229 100644
 --- a/osc.lua
 +++ b/osc.lua
-@@ -1615,6 +1615,13 @@ function bar_layout(direction)
+@@ -1711,6 +1711,13 @@ local function bar_layout(direction, slim)
      lo.geometry = geo
      lo.style = osc_styles.smallButtonsBar
  
@@ -16,7 +16,7 @@ index 0a9965b..afd6047 100644
      -- Volume
      geo = { x = geo.x - geo.w - padX, y = geo.y, an = geo.an, w = geo.w, h = geo.h }
      lo = add_layout("volume")
-@@ -2124,6 +2131,17 @@ function osc_init()
+@@ -2136,6 +2143,17 @@ local function osc_init()
              string.format("%3.0fs", sec))
      end
  
@@ -34,45 +34,3 @@ index 0a9965b..afd6047 100644
      -- volume
      ne = new_element("volume", "button")
  
-@@ -2206,15 +2224,21 @@ function update_margins()
-         reset_margins()
-     end
- 
-+    if utils.shared_script_property_set then
-     utils.shared_script_property_set("osc-margins",
-         string.format("%f,%f,%f,%f", margins.l, margins.r, margins.t, margins.b))
-+    end
-     mp.set_property_native("user-data/osc/margins", margins)
- end
- 
- function shutdown()
-     reset_margins()
-+    if utils.shared_script_property_set then
-     utils.shared_script_property_set("osc-margins", nil)
-+    end
-+    if mp.del_property then
-     mp.del_property("user-data/osc")
-+    end
- end
- 
- --
-@@ -2870,7 +2894,9 @@ function visibility_mode(mode, no_osd)
-     end
- 
-     user_opts.visibility = mode
-+    if utils.shared_script_property_set then
-     utils.shared_script_property_set("osc-visibility", mode)
-+    end
-     mp.set_property_native("user-data/osc/visibility", mode)
- 
-     if not no_osd and tonumber(mp.get_property("osd-level")) >= 1 then
-@@ -2903,7 +2929,9 @@ function idlescreen_visibility(mode, no_osd)
-         user_opts.idlescreen = false
-     end
- 
-+    if utils.shared_script_property_set then
-     utils.shared_script_property_set("osc-idlescreen", mode)
-+    end
-     mp.set_property_native("user-data/osc/idlescreen", user_opts.idlescreen)
- 
-     if not no_osd and tonumber(mp.get_property("osd-level")) >= 1 then
