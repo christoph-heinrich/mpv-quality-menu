@@ -483,9 +483,10 @@ end
 
 ---@return string | nil
 local function get_url()
-    local path = mp.get_property('path')
+    local path, n = mp.get_property('path'), nil
     if not path then return nil end
-    path = path:gsub('ytdl://', '') -- Strip possible ytdl:// prefix.
+    path, n = path:gsub('^ytdl://', '') -- Strip possible ytdl:// prefix.
+    if n > 0 then return path end
 
     ---@param str string
     ---@return boolean
